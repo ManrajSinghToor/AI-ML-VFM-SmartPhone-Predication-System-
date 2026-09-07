@@ -1,6 +1,9 @@
 import matplotlib.pyplot as plt
 
 def generate_graphs(df):
+    print("FUNCTION CALLED")
+
+def generate_graphs(df):
 
     print("\nGenerating Graphs...")
 
@@ -85,7 +88,30 @@ def generate_graphs(df):
     plt.savefig(
         "outputs/graphs/correlation_heatmap.png"
     )
+    plt.figure(figsize=(8,5))
 
+    plt.scatter(
+        df["Storage"],
+        df["Price"]
+    )
+
+    plt.title(
+        "Storage vs Price"
+    )
+
+    plt.xlabel(
+        "Storage"
+    )
+
+    plt.ylabel(
+        "Price"
+    )
+
+    plt.tight_layout()
+
+    plt.savefig(
+        "outputs/graphs/storage_vs_price.png"
+    )
     plt.close()
 
     print("Graphs Saved")
