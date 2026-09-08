@@ -1,67 +1,54 @@
 import pandas as pd
 import joblib
 
-from src.data.load_data import load_data
-
-from src.preprocessing.preprocess_pipeline import (
-    preprocess_pipeline
+from src.visualization.recommendation_graphs import (
+    generate_recommendation_graphs
 )
-
-from src.features.feature_engineering import (
-    feature_engineering
-)
-
-from src.recommendation.similarity_engine import (
-    find_similar_phones
-)
-
 
 def recommend_phones():
 
-    print(
-        "\n===== SMARTPHONE RECOMMENDATION SYSTEM =====\n"
-    )
+    print("\n===== Smartphone Recommender =====\n")
 
     budget = float(
-        input(
-            "Enter Budget (₹): "
-        )
+        input("Enter Budget (₹): ")
     )
 
     ram = float(
-        input(
-            "Enter RAM (GB): "
-        )
+        input("Enter RAM (GB): ")
     )
 
     storage = float(
-        input(
-            "Enter Storage (GB): "
-        )
+        input("Enter Storage (GB): ")
     )
 
-    front = float(
-        input(
-            "Enter Front Camera (MP): "
-        )
+    front_camera = float(
+        input("Enter Front Camera (MP): ")
     )
 
-    back = float(
-        input(
-            "Enter Back Camera (MP): "
-        )
+    back_camera = float(
+        input("Enter Back Camera (MP): ")
     )
 
+    # Load dataset
+    df = pd.read_csv(
+        "dataset/featured_data.csv"
+    )
+
+    # Load trained model
     model = joblib.load(
         "models/best_model.pkl"
     )
+    scaler = joblib.load(
+        "models/scaler.pkl"
+    )
 
+    # Predict user's expected value score
     user_data = pd.DataFrame(
         [[
             ram,
             storage,
-            front,
-            back,
+            front_camera,
+            back_camera,
             budget
         ]],
         columns=[
@@ -72,47 +59,93 @@ def recommend_phones():
             "Price"
         ]
     )
-
-    predicted_score = model.predict(
+    user_data_scaled = scaler.transform(
         user_data
+    )
+    predicted_score = model.predict(
+        user_data_scaled
     )[0]
 
     print(
         f"\nPredicted Value Score: {predicted_score:.2f}"
     )
 
-    df = load_data()
+    # Budget Filter
+    filtered = df[
+        df["Price"] <= budget
+    ].copy()
 
-    df = preprocess_pipeline(df)
+    if len(filtered) == 0:
 
-    df = feature_engineering(df)
+        print(
+            "\nNo phones found within budget."
+        )
 
-    recommendations = find_similar_phones(
-        df,
-        budget,
-        ram,
-        storage,
-        front,
-        back
+        return
+
+    # Similarity / Match Score
+    filtered["Match_Score"] = (
+
+        abs(filtered["RAM"] - ram)
+
+        +
+
+        abs(filtered["Storage"] - storage)
+
+        +
+
+        abs(
+            filtered["Front Camera"]
+            - front_camera
+        )
+
+        +
+
+        abs(
+            filtered["Back Camera"]
+            - back_camera
+        )
+
+    )
+
+    # Sort:
+    # Closest match first
+    # Then highest Value Score
+
+    recommendations = filtered.sort_values(
+        by=[
+            "Match_Score",
+            "Value_Score"
+        ],
+        ascending=[
+            True,
+            False
+        ]
+    ).head(5)
+
+    print(
+        "\n===== Top 5 Recommended Phones =====\n"
     )
 
     print(
-        "\n===== TOP 5 RECOMMENDED PHONES =====\n"
+        recommendations[
+            [
+                "Company Name",
+                "Model Name",
+                "RAM",
+                "Storage",
+                "Front Camera",
+                "Back Camera",
+                "Price",
+                "Value_Score"
+            ]
+        ]
     )
 
-    for idx, row in recommendations.iterrows():
+    generate_recommendation_graphs(
+        recommendations
+    )
 
-        print(
-            f"""
-Brand          : {row['Company Name']}
-Model          : {row['Model Name']}
-RAM            : {row['RAM']} GB
-Storage        : {row['Storage']} GB
-Front Camera   : {row['Front Camera']} MP
-Back Camera    : {row['Back Camera']} MP
-Price          : ₹{row['Price']}
-Value Score    : {row['Value_Score']:.2f}
-
-------------------------------------------
-"""
-        )
+    print(
+        "\nRecommendation Graphs Saved"
+    )

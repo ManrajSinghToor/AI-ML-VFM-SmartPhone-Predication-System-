@@ -1,6 +1,7 @@
 from src.visualization.generate_graphs import generate_graphs
-# after creating Value_Score
+
 def feature_engineering(df):
+
     print("\nCreating Value Score...")
 
     df["Value_Score"] = (
@@ -12,5 +13,7 @@ def feature_engineering(df):
         )
         / df["Price"]
     ) * 100000
+
     generate_graphs(df)
+
     return df
