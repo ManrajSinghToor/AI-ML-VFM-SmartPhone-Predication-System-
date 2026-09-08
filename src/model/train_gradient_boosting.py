@@ -1,6 +1,9 @@
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score
+from sklearn.metrics import (
+    r2_score,
+    mean_absolute_error
+)
 import joblib
 
 
@@ -21,15 +24,25 @@ def train_gradient_boosting(X, y):
 
     pred = model.predict(X_test)
 
-    score = r2_score(y_test, pred)
+    r2 = r2_score(
+        y_test,
+        pred
+    )
+
+    mae = mean_absolute_error(
+        y_test,
+        pred
+    )
 
     joblib.dump(
         model,
         "models/gradient_boosting.pkl"
     )
 
-    print(
-        f"\nGradient Boosting R2 Score: {score:.4f}"
-    )
+    print("\n===== Gradient Boosting =====")
 
-    return score
+    print(f"R² Score : {r2:.4f}")
+
+    print(f"MAE      : {mae:.4f}")
+
+    return r2
